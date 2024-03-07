@@ -1,81 +1,96 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use std::fs;
+// slash route returns "Hello world!"
 #[get("/")]
 async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
-
+//provides chicken picture to /chicken end point
+// used in 404.html 
 #[get("/chicken")]
 async fn chicken() -> impl Responder {
-let chicken = fs::read("./imgs/lost_chicken.jpeg");
-
+    let chicken = fs::read("./imgs/lost_chicken.jpeg");
+//check if chicken file read was success
     match chicken {
+        //if success, return the chicken
         Ok(chicken) => HttpResponse::Ok().body(chicken),
+        //no success, chicken is secret
         Err(err) => HttpResponse::Ok().body("Image not found")
-
     }
-
-
 }
-
-
-
-#[get("/hel")]
-async fn hello3() -> impl Responder {
-    let error = "Cannot read file.";
-let html = fs::read_to_string("./html/index.html");
-let error_page = fs::read_to_string("./html/404.html");
-   // println!("hiiiiiii {}", html.as_ref().unwrap());
+//test of error handling if file exists/did not exist
+#[get("/gremlin")]
+async fn gremlin() -> impl Responder {
+    //error message if neither index.html or 404.html file(s) is(are) not found
+    let error_var = "<p>Cannot read file.</p>";
+    //reads index.html file
+    let html = fs::read_to_string("./html/index.html");
+    //reads 404 error page file
+    let error_page = fs::read_to_string("./html/404.html");
+    //check if file read of html variable(index.html) was successful
     match html{
-       // "Cannot read file." => HttpResponse::Ok().body("File not found"),
-        Ok(html) => HttpResponse::Ok().content_type("text/html").body(html),
+        //no error, index.html path exists
+            Ok(html) => HttpResponse::Ok().content_type("text/html").body(html),
+        //if index does not exist, go check if 404 page exists
      Err(err) => match error_page {
-            Ok(error_page) =>HttpResponse::Ok().content_type("text/html").body(error_page),
-            Err(err)=>HttpResponse::Ok().body("File not found"),
+            //sends 404 error page
+            Ok(error_page) => HttpResponse::Ok().content_type("text/html").body(error_page),
+            //text displayed if both 404 page and index cannot be found
+            Err(err)=> HttpResponse::Ok().body(error_var),
         }
-        }
+     }
 }
-
+//echos post request
 #[post("/echo")]
 async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
-
+// responder for /hey endpoint
 async fn manual_hello() -> impl Responder {
     HttpResponse::Ok().body("Hey there!")
 }
+//responder for /pizza endpoint
 async fn pizza_time() -> impl Responder {
     HttpResponse::Ok().body("<a href='http://www.pizza.com'>pizza</a>")
 }
-async fn hello_html() -> impl Responder {
+//responder for /unsaf_gremlin endpoint
+async fn unsaf_gremlin() -> impl Responder {
+    //if this cannot read index.html, it will crash the server
     let html = fs::read_to_string("./html/index.html").expect("Cannot read file");
     HttpResponse::Ok()
         .content_type("text/html")
         .body(html)
 }
-
-
-
+//404 error page for default service to handle all unaddressed endpoints
 async fn error_page() -> impl Responder {
+    //read 404.html to String
     let error_file = fs::read_to_string("./html/404.html");
-
+//check if file read was successful or not
     match error_file {
+        //404.html exists
         Ok(error_file) => HttpResponse::Ok().content_type("text/html").body(error_file),
+        //404.html does not exist
         Err(err) => HttpResponse::Ok().body("File not found")
     }
 }
-
+//main server
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    //HttpServer instantiatiatiation
     HttpServer::new(|| {
         App::new()
+            //slash / endpoint
             .service(hello)
+            // /echo endpoint
             .service(echo)
-            .service(hello3)
+            //slash /gremlin endpoint
+            .service(gremlin)
+            // /chicken endpoint
             .service(chicken)
             .route("/hey", web::get().to(manual_hello))
             .route("/pizza", web::get().to(pizza_time))
-            .route("/hello2",web::get().to(hello_html))
+            .route("/unsaf_gremlin",web::get().to(unsaf_gremlin))
+            //handles all unaddressed endpoints
         .default_service(
         web::route().to(error_page)
             )
