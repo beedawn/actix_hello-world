@@ -3,14 +3,6 @@ use std::fs;
 use std::path::PathBuf;
 use std::path::Path;
 
-//let x:i32=0;
-
-
-//while (x<10){
-
-//#[get("/{}"
-
-//}
 fn read_files (user_path:String)->String{
 
     //mutable string to build over course of function
@@ -32,8 +24,7 @@ let entry_path_string = entry_path.display().to_string();
                 println!("{} is dir", entry_path_string);
 
                 //recursively calls read_files
-                //need to figureout if we should move to vector or keep string and need a way to
-                //get this output into the flow
+                //need to figureout if we should move to vector or keep string 
                 path_string.push_str(read_files(entry_path_string.clone()).as_str());
 
             }
@@ -52,7 +43,7 @@ let entry_path_string = entry_path.display().to_string();
 // slash route returns "irectory of files
 #[get("/")]
 async fn directory() -> impl Responder {
-    let html_paths:String = read_files(String::from("./html/"));
+    let html_paths:String = read_files(String::from("."));
     HttpResponse::Ok().body(html_paths)
 }
 //provides chicken picture to /chicken end point
@@ -90,6 +81,8 @@ async fn gremlin() -> impl Responder {
         }
      }
 }
+
+
 //echos post request
 #[post("/echo")]
 async fn echo(req_body: String) -> impl Responder {
