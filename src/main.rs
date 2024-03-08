@@ -1,8 +1,19 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use std::fs;
-// slash route returns "Hello world!"
+
+//let x:i32=0;
+
+
+//while (x<10){
+
+//#[get("/{}"
+
+//}
+
+
+// slash route returns "irectory of files
 #[get("/")]
-async fn hello() -> impl Responder {
+async fn directory() -> impl Responder {
 let mut path_string:String = "".to_owned();
 
 for entry in fs::read_dir("./html").unwrap() {
@@ -13,8 +24,13 @@ let entry_path = entry.unwrap().path();
             println!("bye");
 
         }
+
+        path_string.push_str("<p><a href=\"");
 path_string.push_str(entry_path.display().to_string().as_str());
-        path_string.push_str(" ");
+        path_string.push_str("\">");
+        path_string.push_str(entry_path.display().to_string().as_str());
+        path_string.push_str("</a></p>");
+        path_string.push_str("\n");
 
     }
 
@@ -95,7 +111,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             //slash / endpoint
-            .service(hello)
+            .service(directory)
             // /echo endpoint
             .service(echo)
             //slash /gremlin endpoint
