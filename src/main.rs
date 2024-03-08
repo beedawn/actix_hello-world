@@ -3,7 +3,22 @@ use std::fs;
 // slash route returns "Hello world!"
 #[get("/")]
 async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
+let mut path_string:String = "".to_owned();
+
+for entry in fs::read_dir("./html").unwrap() {
+let entry_path = entry.unwrap().path();
+        if let Ok(entry) = fs::read_dir("./html"){
+    println!("{:?}",entry_path);
+        }else{
+            println!("bye");
+
+        }
+path_string.push_str(entry_path.display().to_string().as_str());
+        path_string.push_str(" ");
+
+    }
+
+    HttpResponse::Ok().body(path_string)
 }
 //provides chicken picture to /chicken end point
 // used in 404.html 
