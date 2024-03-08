@@ -52,7 +52,7 @@ let entry_path_string = entry_path.display().to_string();
 // slash route returns "irectory of files
 #[get("/")]
 async fn directory() -> impl Responder {
-    let html_paths:String = read_files(String::from("."));
+    let html_paths:String = read_files(String::from("./html/"));
     HttpResponse::Ok().body(html_paths)
 }
 //provides chicken picture to /chicken end point
