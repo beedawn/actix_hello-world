@@ -1,5 +1,7 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use std::fs;
+use std::path::PathBuf;
+use std::path::Path;
 
 //let x:i32=0;
 
@@ -9,32 +11,49 @@ use std::fs;
 //#[get("/{}"
 
 //}
+fn read_files (user_path:String)->String{
 
+    //mutable string to build over course of function
+    let mut path_string:String = "".to_owned();
+//do we need a veector?
+    let mut path_vector: Vec<PathBuf>= vec![];
+    //loops through each of the files 
+    for entry in fs::read_dir(user_path.clone()).unwrap() {
+        //unwraps entry into the path
+        let entry_path = entry.unwrap().path();
+        //gets a usable string from entry path because we use it alot right now
+let entry_path_string = entry_path.display().to_string();
+//if entry read is ok ?
+        if let Ok(entry) = fs::read_dir(user_path.clone()){
+           // println!("{:?}",entry_path);
+            // checks if entry is a directory
+            if Path::new(&entry_path_string).is_dir(){
+                //prints out found directories
+                println!("{} is dir", entry_path_string);
+
+                //recursively calls read_files
+                //need to figureout if we should move to vector or keep string and need a way to
+                //get this output into the flow
+                path_string.push_str(read_files(entry_path_string.clone()).as_str());
+
+            }
+            path_vector.push(entry_path.clone());
+        }else{
+            println!("Error reading file directory.");
+
+        }
+        path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",entry_path_string,entry_path_string).as_str());
+    
+    }
+    println!("{:?}",path_vector);
+    path_string
+}
 
 // slash route returns "irectory of files
 #[get("/")]
 async fn directory() -> impl Responder {
-let mut path_string:String = "".to_owned();
-
-for entry in fs::read_dir("./html").unwrap() {
-let entry_path = entry.unwrap().path();
-        if let Ok(entry) = fs::read_dir("./html"){
-    println!("{:?}",entry_path);
-        }else{
-            println!("bye");
-
-        }
-
-        path_string.push_str("<p><a href=\"");
-path_string.push_str(entry_path.display().to_string().as_str());
-        path_string.push_str("\">");
-        path_string.push_str(entry_path.display().to_string().as_str());
-        path_string.push_str("</a></p>");
-        path_string.push_str("\n");
-
-    }
-
-    HttpResponse::Ok().body(path_string)
+    let html_paths:String = read_files(String::from("."));
+    HttpResponse::Ok().body(html_paths)
 }
 //provides chicken picture to /chicken end point
 // used in 404.html 
