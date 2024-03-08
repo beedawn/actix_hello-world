@@ -10,6 +10,7 @@ fn read_files (user_path:String)->String{
 //do we need a veector?
     let mut path_vector: Vec<PathBuf>= vec![];
     //loops through each of the files 
+    //throws error if file is wrong
     for entry in fs::read_dir(user_path.clone()).unwrap() {
         //unwraps entry into the path
         let entry_path = entry.unwrap().path();
@@ -22,7 +23,6 @@ let entry_path_string = entry_path.display().to_string();
             if Path::new(&entry_path_string).is_dir(){
                 //prints out found directories
                 println!("{} is dir", entry_path_string);
-
                 //recursively calls read_files
                 //need to figureout if we should move to vector or keep string 
                 path_string.push_str(read_files(entry_path_string.clone()).as_str());
@@ -31,10 +31,8 @@ let entry_path_string = entry_path.display().to_string();
             path_vector.push(entry_path.clone());
         }else{
             println!("Error reading file directory.");
-
         }
         path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",entry_path_string,entry_path_string).as_str());
-    
     }
     println!("{:?}",path_vector);
     path_string
@@ -43,7 +41,8 @@ let entry_path_string = entry_path.display().to_string();
 // slash route returns "irectory of files
 #[get("/")]
 async fn directory() -> impl Responder {
-    let html_paths:String = read_files(String::from("."));
+    let html_paths:String = read_files(String::from("./html"));
+
     HttpResponse::Ok().body(html_paths)
 }
 //provides chicken picture to /chicken end point
