@@ -17,8 +17,14 @@ fn read_files_convert_html_list (user_path:String)->String{
 
     //loops through items in return_vec, and renders the html to return
     for item in path_vector.clone(){
-        println!("RETURN VEC: {:?}",item);
+        //checks if path is dir, if so, no hyperlink
+        if Path::new(&item).is_dir(){
+            path_string.push_str(format!("<p>Directory:{}</p>\n",item.display()).as_str());
+
+        }else{
+            //else provide hyperlink
         path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",item.display(),item.display()).as_str());
+        }
     }
     //returns string of html, list of links to each file in the supplied path from user_path
     path_string
@@ -31,6 +37,7 @@ fn read_files_convert_html_list (user_path:String)->String{
         match file{
             Ok(file) => file,
             Err(err) => (format!("File not found. Error:{}",err).into())
+        //could add something here to have a directory page populate
     }
 }
 
@@ -77,7 +84,7 @@ fn read_files_vec (user_path_vec:Vec<PathBuf>)->Vec<PathBuf>{
     //throws error if file is wrong
     //
     for single_path in user_path_vec{
-        println!("{:?}",single_path);
+       // println!("{:?}",single_path);
         //need error handling here for if a file is not a dir
         if let Ok(entry) = fs::read_dir(single_path.clone()){
         for entry in fs::read_dir(single_path.clone()).unwrap() {
@@ -136,22 +143,22 @@ fn read_files_vec (user_path_vec:Vec<PathBuf>)->Vec<PathBuf>{
 #[get("/")]
 async fn directory() -> impl Responder {
     let html_paths:String = read_files_convert_html_list(String::from("./html"));
-    println!("VECTOR::::{:?}", read_files_vec(vec![PathBuf::from("./html")]));
+   // println!("VECTOR::::{:?}", read_files_vec(vec![PathBuf::from("./html")]));
     HttpResponse::Ok().body(html_paths)
 }
 //provides chicken picture to /chicken end point
 // used in 404.html 
-#[get("/chicken")]
-async fn chicken() -> impl Responder {
-    let chicken = fs::read("./imgs/lost_chicken.jpeg");
+//#[get("/chicken")]
+//async fn chicken() -> impl Responder {
+  //  let chicken = fs::read("./imgs/lost_chicken.jpeg");
 //check if chicken file read was success
-    match chicken {
+   // match chicken {
         //if success, return the chicken
-        Ok(chicken) => HttpResponse::Ok().body(chicken),
+     //   Ok(chicken) => HttpResponse::Ok().body(chicken),
         //no success, chicken is secret
-        Err(err) => HttpResponse::Ok().body(format!("Image not found, {}", err))
-    }
-}
+       // Err(err) => HttpResponse::Ok().body(format!("Image not found, {}", err))
+   // }
+//}
 
 //test of error handling if file exists/did not exist
 #[get("/gremlin")]
@@ -202,9 +209,9 @@ async fn unsaf_gremlin() -> impl Responder {
  async fn file_render_manual(path: web::Path<(String)>)->HttpResponse{
     let string = format!(".{}",path.clone());
    //let string= read_files(string);
-    println!("{}",string);
+   // println!("{}",string);
     let bytes = read_serve_files_as_bytes(string);
-println!("path:{}",path);
+//println!("path:{}",path);
   //  HttpResponse::Ok().body(format!("User detail: {} {}", path.into_inner(),string))
     HttpResponse::Ok().body(bytes)
 
@@ -228,13 +235,13 @@ async fn file_render(path: web::Path<(String)>) -> HttpResponse {
     let string = format!("./html/{}",path.clone());
    //let string= read_files(string);
     let bytes = read_serve_files_as_bytes(string);
-println!("{}",path);
   //  HttpResponse::Ok().body(format!("User detail: {} {}", path.into_inner(),string))
     HttpResponse::Ok().body(bytes)
 
 }
 //modular route configuration,
 //do we need a loop here to create all the end points?
+//the one bummer about this config is that it needs restarted everytime the app runs
 fn config(cfg: &mut web::ServiceConfig) {
 
     //need to write a loop here that gets the file names and then creates an end point and
@@ -244,13 +251,13 @@ fn config(cfg: &mut web::ServiceConfig) {
    let mut path_vec= read_files_vec(vec![PathBuf::from("./html")]);
     let mut x = 5;
     for item in path_vec {
-    println!("{}",format!("{:?}",item.display().to_string()));
+   // println!("{}",format!("{:?}",item.display().to_string()));
 
     let mut s = item.display().to_string();
         if s.len() > 0 {
         s.remove(0);
         }
-        println!("{}",s);
+       // println!("{}",s);
 
     cfg.service(web::resource(format!("{}",s))
         .route(web::get().to(move|| file_render_manual(s.clone().into())))
@@ -274,7 +281,7 @@ async fn main() -> std::io::Result<()> {
             //slash /gremlin endpoint
             .service(gremlin)
             // /chicken endpoint
-            .service(chicken)
+            //.service(chicken)
             .service(file_render)
             .route("/hey", web::get().to(manual_hello))
             .route("/pizza", web::get().to(pizza_time))
