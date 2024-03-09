@@ -2,7 +2,8 @@ use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use std::fs;
 use std::path::PathBuf;
 use std::path::Path;
-
+//reads files and returns a string with them hyperlinked to their file paths relative to the host
+//does not serve the files, just reads
 fn read_files (user_path:String)->String{
 
     //mutable string to build over course of function
@@ -26,7 +27,6 @@ let entry_path_string = entry_path.display().to_string();
                 //recursively calls read_files
                 //need to figureout if we should move to vector or keep string 
                 path_string.push_str(read_files(entry_path_string.clone()).as_str());
-
             }
             path_vector.push(entry_path.clone());
         }else{
@@ -37,6 +37,21 @@ let entry_path_string = entry_path.display().to_string();
     println!("{:?}",path_vector);
     path_string
 }
+
+
+fn read_serve_files_as_bytes (user_path:String) -> Vec<u8> {
+        let result:Vec<u8>=vec![];
+        let file = fs::read(user_path);
+
+        match file{
+            Ok(file) => file,
+            Err(err) => (format!("File not found. Error:{}",err).into())
+
+    }
+}
+
+
+
 
 // slash route returns "irectory of files
 #[get("/")]
@@ -55,7 +70,7 @@ async fn chicken() -> impl Responder {
         //if success, return the chicken
         Ok(chicken) => HttpResponse::Ok().body(chicken),
         //no success, chicken is secret
-        Err(err) => HttpResponse::Ok().body("Image not found")
+        Err(err) => HttpResponse::Ok().body(format!("Image not found, {}", err))
     }
 }
 //test of error handling if file exists/did not exist
@@ -80,7 +95,6 @@ async fn gremlin() -> impl Responder {
         }
      }
 }
-
 
 //echos post request
 #[post("/echo")]
@@ -115,12 +129,41 @@ async fn error_page() -> impl Responder {
         Err(err) => HttpResponse::Ok().body("File not found")
     }
 }
+#[get("/html/{id}")]
+async fn file_render(path: web::Path<(String)>) -> HttpResponse {
+    let string = format!("./html/{}",path.clone());
+   //let string= read_files(string);
+    let bytes = read_serve_files_as_bytes(string);
+println!("{}",path);
+  //  HttpResponse::Ok().body(format!("User detail: {} {}", path.into_inner(),string))
+    HttpResponse::Ok().body(bytes)
+
+}
+//modular 
+fn config(cfg: &mut web::ServiceConfig) {
+
+    //need to write a loop here that gets the file names and then creates an end point and
+    //serves it at each end point
+    //
+    let mut x = 5;
+    while x > 0 {
+    cfg.service(web::resource(format!("/{}",x))
+        .route(web::get().to(pizza_time))
+        .route(web::head().to(|| HttpResponse::MethodNotAllowed()))
+    );
+    x-=1;
+    }
+}
+
+
+
 //main server
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     //HttpServer instantiatiatiation
     HttpServer::new(|| {
         App::new()
+            .configure(config)
             //slash / endpoint
             .service(directory)
             // /echo endpoint
@@ -129,6 +172,7 @@ async fn main() -> std::io::Result<()> {
             .service(gremlin)
             // /chicken endpoint
             .service(chicken)
+            .service(file_render)
             .route("/hey", web::get().to(manual_hello))
             .route("/pizza", web::get().to(pizza_time))
             .route("/unsaf_gremlin",web::get().to(unsaf_gremlin))
