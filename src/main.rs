@@ -93,32 +93,32 @@ fn read_files_vec (user_path_vec:Vec<String>)->Vec<String>{
     //throws error if file is wrong
     //
     for single_path in user_path_vec{
-    for entry in fs::read_dir(single_path.clone()).unwrap() {
-        //unwraps entry into the path
-        let entry_path = entry.unwrap().path();
-        //gets a usable string from entry path because we use it alot right now
-let entry_path_string = entry_path.display().to_string();
-//if entry read is ok ?
-        if let Ok(entry) = fs::read_dir(single_path.clone()){
-           // println!("{:?}",entry_path);
-            // checks if entry is a directory
-            if Path::new(&entry_path_string).is_dir(){
-                //prints out found directories
-                println!("{} is dir", entry_path_string);
-                //recursively calls read_files
-                //need to figureout if we should move to vector or keep string 
+        for entry in fs::read_dir(single_path.clone()).unwrap() {
+            //unwraps entry into the path
+            let entry_path = entry.unwrap().path();
+            //gets a usable string from entry path because we use it alot right now
+            let entry_path_string = entry_path.display().to_string();
+            //if entry read is ok ?
+            if let Ok(entry) = fs::read_dir(single_path.clone()){
+                // println!("{:?}",entry_path);
+                // checks if entry is a directory
+                if Path::new(&entry_path_string).is_dir(){
+                    //prints out found directories
+                    println!("{} is dir", entry_path_string);
+                    //recursively calls read_files
+                    //need to figureout if we should move to vector or keep string 
               
-                //throws compile error, need to figure out 
+                    //throws compile error, need to figure out 
                 
-                // path_string.push_str(read_files_vec(entry_path_string.clone()).as_str());
-                path_vector.push(entry_path.clone());
-            }
-           // path_vector.push(entry_path.clone());
-        }else{
-            println!("Error reading file directory.");
-        }
-        path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",entry_path_string,entry_path_string).as_str());
-    }
+                    // path_string.push_str(read_files_vec(entry_path_string.clone()).as_str());
+                    path_vector.push(entry_path.clone());
+                }
+                 // path_vector.push(entry_path.clone());
+                }else{
+                    println!("Error reading file directory.");
+                }
+             path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",entry_path_string,entry_path_string).as_str());
+         }
     }
     println!("{:?}",path_vector);
 
