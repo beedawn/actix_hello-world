@@ -8,28 +8,19 @@ fn read_files_convert_html_list (user_path:String)->String{
 
     //mutable string to build over course of function
     let mut path_string:String = "".to_owned();
-//do we need a veector?
+    //vector to append results to
     let mut return_vec:Vec<PathBuf>=vec![];
         //loops through each of the files 
     //throws error if file is wrong
-    for entry in fs::read_dir(user_path.clone()).unwrap() {
-        //unwraps entry into the path
 
-        let entry_path = entry.unwrap().path();
-        //gets a usable string from entry path because we use it alot right now
-    let entry_path_string = entry_path.display().to_string();
-    //if entry read is ok ?
-        println!("Entry Path:{:?}",entry_path);
     let mut path_vector: Vec<PathBuf>= read_files_vec(vec![PathBuf::from(user_path.clone())]);
-    return_vec.append(&mut path_vector);
-    }
 
-
-
-    for item in return_vec.clone(){
+    //loops through items in return_vec, and renders the html to return
+    for item in path_vector.clone(){
         println!("RETURN VEC: {:?}",item);
         path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",item.display(),item.display()).as_str());
     }
+    //returns string of html, list of links to each file in the supplied path from user_path
     path_string
 }
 
@@ -95,7 +86,6 @@ fn read_files_vec (user_path_vec:Vec<PathBuf>)->Vec<PathBuf>{
             //gets a usable string from entry path because we use it alot right now
             let entry_path_string = entry_path.display().to_string();
             //if entry read is ok ?
-            if let Ok(entry) = fs::read_dir(single_path.clone()){
                 // println!("{:?}",entry_path);
                 // checks if entry is a directory
                 if Path::new(&entry_path_string).is_dir(){
@@ -116,9 +106,7 @@ fn read_files_vec (user_path_vec:Vec<PathBuf>)->Vec<PathBuf>{
                 }
                     
                  // path_vector.push(entry_path.clone());
-                }else{
-                    println!("Error reading file directory.");
-                }
+            
             // path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",entry_path_string,entry_path_string).as_str());
             path_vector.append(&mut vec![entry_path.clone()]);
          }
@@ -238,10 +226,12 @@ fn config(cfg: &mut web::ServiceConfig) {
     //need to write a loop here that gets the file names and then creates an end point and
     //serves it at each end point
     //
+    //
+   let mut path_vec= read_files_vec(vec![PathBuf::from("./html")]);
     let mut x = 5;
-    while x > 0 {
+    for item in path_vec {
 
-    cfg.service(web::resource(format!("/pizza/{}",x))
+    cfg.service(web::resource(format!("/{}",item.display()))
         .route(web::get().to(pizza_time))
         .route(web::head().to(|| HttpResponse::MethodNotAllowed()))
     );
@@ -255,7 +245,7 @@ async fn main() -> std::io::Result<()> {
     //HttpServer instantiatiatiation
     HttpServer::new(|| {
         App::new()
-            .configure(config)
+          //  .configure(config)
             //slash / endpoint
             .service(directory)
             // /echo endpoint
