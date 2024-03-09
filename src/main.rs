@@ -24,7 +24,7 @@ fn read_files_convert_html_list (user_path:String)->String{
     path_string
 }
 
-fn read_serve_files_as_bytes (user_path:String) -> Vec<u8> {
+ fn read_serve_files_as_bytes (user_path:String) -> Vec<u8> {
         let result:Vec<u8>=vec![];
         let file = fs::read(user_path);
 
@@ -197,6 +197,20 @@ async fn unsaf_gremlin() -> impl Responder {
         .content_type("text/html")
         .body(html)
 }
+
+
+ async fn file_render_manual(path: web::Path<(String)>)->HttpResponse{
+    let string = format!(".{}",path.clone());
+   //let string= read_files(string);
+    println!("{}",string);
+    let bytes = read_serve_files_as_bytes(string);
+println!("path:{}",path);
+  //  HttpResponse::Ok().body(format!("User detail: {} {}", path.into_inner(),string))
+    HttpResponse::Ok().body(bytes)
+
+}
+
+    
 //404 error page for default service to handle all unaddressed endpoints
 async fn error_page() -> impl Responder {
     //read 404.html to String
@@ -230,9 +244,16 @@ fn config(cfg: &mut web::ServiceConfig) {
    let mut path_vec= read_files_vec(vec![PathBuf::from("./html")]);
     let mut x = 5;
     for item in path_vec {
+    println!("{}",format!("{:?}",item.display().to_string()));
 
-    cfg.service(web::resource(format!("/{}",item.display()))
-        .route(web::get().to(pizza_time))
+    let mut s = item.display().to_string();
+        if s.len() > 0 {
+        s.remove(0);
+        }
+        println!("{}",s);
+
+    cfg.service(web::resource(format!("{}",s))
+        .route(web::get().to(move|| file_render_manual(s.clone().into())))
         .route(web::head().to(|| HttpResponse::MethodNotAllowed()))
     );
     x-=1;
@@ -245,7 +266,7 @@ async fn main() -> std::io::Result<()> {
     //HttpServer instantiatiatiation
     HttpServer::new(|| {
         App::new()
-          //  .configure(config)
+            .configure(config)
             //slash / endpoint
             .service(directory)
             // /echo endpoint
