@@ -4,37 +4,32 @@ use std::path::PathBuf;
 use std::path::Path;
 //reads files and returns a string with them hyperlinked to their file paths relative to the host
 //does not serve the files, just reads
-fn read_files (user_path:String)->String{
+fn read_files_convert_html_list (user_path:String)->String{
 
     //mutable string to build over course of function
     let mut path_string:String = "".to_owned();
 //do we need a veector?
-    let mut path_vector: Vec<PathBuf>= vec![];
-    //loops through each of the files 
+    let mut return_vec:Vec<PathBuf>=vec![];
+        //loops through each of the files 
     //throws error if file is wrong
     for entry in fs::read_dir(user_path.clone()).unwrap() {
         //unwraps entry into the path
+
         let entry_path = entry.unwrap().path();
         //gets a usable string from entry path because we use it alot right now
-let entry_path_string = entry_path.display().to_string();
-//if entry read is ok ?
-        if let Ok(entry) = fs::read_dir(user_path.clone()){
-           // println!("{:?}",entry_path);
-            // checks if entry is a directory
-            if Path::new(&entry_path_string).is_dir(){
-                //prints out found directories
-                println!("{} is dir", entry_path_string);
-                //recursively calls read_files
-                //need to figureout if we should move to vector or keep string 
-                path_string.push_str(read_files(entry_path_string.clone()).as_str());
-            }
-            path_vector.push(entry_path.clone());
-        }else{
-            println!("Error reading file directory.");
-        }
-        path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",entry_path_string,entry_path_string).as_str());
+    let entry_path_string = entry_path.display().to_string();
+    //if entry read is ok ?
+        println!("Entry Path:{:?}",entry_path);
+    let mut path_vector: Vec<PathBuf>= read_files_vec(vec![PathBuf::from(user_path.clone())]);
+    return_vec.append(&mut path_vector);
     }
-    println!("{:?}",path_vector);
+
+
+
+    for item in return_vec.clone(){
+        println!("RETURN VEC: {:?}",item);
+        path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",item.display(),item.display()).as_str());
+    }
     path_string
 }
 
@@ -78,21 +73,22 @@ path_string
 
 //maybe need to rethink the logic and extract the string reading process from read_files into it's
 //own function so it can be used in read_files and here.
-fn read_files_vec (user_path_vec:Vec<String>)->Vec<String>{
+fn read_files_vec (user_path_vec:Vec<PathBuf>)->Vec<PathBuf>{
     //so we need to loop over each string in the vector
     //find all the files and directories, collect those, and put them into the same vector
 
 
-
-
     //mutable string to build over course of function
     let mut path_string:String = "".to_owned();
-//do we need a veector? yes here we do
+    //do we need a veector? yes here we do
     let mut path_vector: Vec<PathBuf>= vec![];
     //loops through each of the files 
     //throws error if file is wrong
     //
     for single_path in user_path_vec{
+        println!("{:?}",single_path);
+        //need error handling here for if a file is not a dir
+        if let Ok(entry) = fs::read_dir(single_path.clone()){
         for entry in fs::read_dir(single_path.clone()).unwrap() {
             //unwraps entry into the path
             let entry_path = entry.unwrap().path();
@@ -104,26 +100,35 @@ fn read_files_vec (user_path_vec:Vec<String>)->Vec<String>{
                 // checks if entry is a directory
                 if Path::new(&entry_path_string).is_dir(){
                     //prints out found directories
-                    println!("{} is dir", entry_path_string);
+                    //println!("{} is dir", entry_path_string);
                     //recursively calls read_files
                     //need to figureout if we should move to vector or keep string 
               
                     //throws compile error, need to figure out 
                 
                     // path_string.push_str(read_files_vec(entry_path_string.clone()).as_str());
-                    path_vector.push(entry_path.clone());
+                   // read_files_vec(entry_path_string)
+                    // path_vector.push(entry_path.clone());
+                    let mut vec1 = read_files_vec(vec![entry_path.clone()]);
+
+
+                    path_vector.append(&mut vec1);
                 }
+                    
                  // path_vector.push(entry_path.clone());
                 }else{
                     println!("Error reading file directory.");
                 }
-             path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",entry_path_string,entry_path_string).as_str());
+            // path_string.push_str(format!("<p><a href=\"{}\">{}</a></p>\n",entry_path_string,entry_path_string).as_str());
+            path_vector.append(&mut vec![entry_path.clone()]);
          }
+        }
     }
-    println!("{:?}",path_vector);
+   // println!("{:?}",path_vector);
 
     //this is just here to get this to compile, the vec part
-    vec![path_string]
+    //vec![path_string]
+    path_vector
 }
 
 
@@ -142,8 +147,8 @@ fn read_files_vec (user_path_vec:Vec<String>)->Vec<String>{
 // slash route returns "irectory of files
 #[get("/")]
 async fn directory() -> impl Responder {
-    let html_paths:String = read_files(String::from("./html"));
-
+    let html_paths:String = read_files_convert_html_list(String::from("./html"));
+    println!("VECTOR::::{:?}", read_files_vec(vec![PathBuf::from("./html")]));
     HttpResponse::Ok().body(html_paths)
 }
 //provides chicken picture to /chicken end point
